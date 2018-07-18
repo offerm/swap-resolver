@@ -35,7 +35,18 @@ type swapResolverServer struct {
 
 // GetFeature returns the feature at the given point.
 func (s *swapResolverServer) ResolveHash(ctx context.Context, point *pb.ResolveReq) (*pb.ResolveResp, error) {
-	return &pb.ResolveResp{
+
+	//if pd.Amount == 3000000{
+	//	preimage := [32]byte{
+	//		0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
+	//		0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
+	//		0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
+	//		0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
+	//	}
+	//
+	//} else{
+
+		return &pb.ResolveResp{
 		Preimage: "1111111111111111111111111111111111111111111111111111111111111111",
 	}, nil
 }
