@@ -97,19 +97,19 @@ var takeordercommand = cli.Command{
 		},
 		cli.Int64Flag{
 			Name:  "maker_amount",
-			Usage: "the number of coins denominated in {l/s}atoshis the maker should send",
+			Usage: "the number of coins denominated in {l/s}atoshis the maker is expecting to get",
 		},
 		cli.StringFlag{
 			Name:  "maker_coin",
-			Usage: "the coins which the maker should send to the taker",
+			Usage: "the coins which the maker is expecting to get",
 		},
 		cli.Int64Flag{
 			Name:  "taker_amount",
-			Usage: "the number of coins denominated in {l/s}atoshis the taker should send",
+			Usage: "the number of coins denominated in {l/s}atoshis the taker is expecting to get",
 		},
 		cli.StringFlag{
 			Name:  "taker_coin",
-			Usage: "the coins which the taker should send to the maker",
+			Usage: "the coins which the taker is expecting to get",
 		},
 
 	},
@@ -147,7 +147,15 @@ func takeOrder(ctx *cli.Context) error{
 	if !ctx.IsSet("maker_coin"){
 		return fmt.Errorf("maker_coin argument missing")
 	}
-	req.MakerCoin = ctx.String("maker_coin")
+
+	switch ctx.String("maker_coin") {
+	case "BTC":
+		req.MakerCoin = pb.CoinType_BTC
+	case "LTC":
+		req.MakerCoin = pb.CoinType_LTC
+	default:
+		return fmt.Errorf("Invalid maker coin %v. Valid values are BTC and LTC only.", ctx.String("maker_coin"))
+	}
 
 	if !ctx.IsSet("taker_amount"){
 		return fmt.Errorf("taker_amount argument missing")
@@ -157,7 +165,18 @@ func takeOrder(ctx *cli.Context) error{
 	if !ctx.IsSet("taker_coin"){
 		return fmt.Errorf("taker_coin argument missing")
 	}
-	req.TakerCoin = ctx.String("taker_coin")
+	switch ctx.String("taker_coin") {
+	case "BTC":
+		req.TakerCoin = pb.CoinType_BTC
+	case "LTC":
+		req.TakerCoin = pb.CoinType_LTC
+	default:
+		return fmt.Errorf("Invalid taker coin %v. Valid values are BTC and LTC only.", ctx.String("taker_coin"))
+	}
+
+	if req.MakerCoin == req.TakerCoin{
+		return fmt.Errorf("Maker and Taker coins can't be the same")
+	}
 
 
 	log.Printf("Starting takeOrder command: %v",req)

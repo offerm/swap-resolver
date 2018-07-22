@@ -2,6 +2,18 @@
 
 
 [[projects]]
+  name = "github.com/davecgh/go-spew"
+  packages = ["spew"]
+  revision = "346938d642f2ec3594ed81d874461961cd0faa76"
+  version = "v1.1.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/dchest/uniuri"
+  packages = ["."]
+  revision = "8902c56451e9b58ff940bbe5fec35d5f9c04584a"
+
+[[projects]]
   name = "github.com/golang/mock"
   packages = ["gomock"]
   revision = "c34cdb4725f4c3844d095133c6e40e448b86589b"
@@ -86,6 +98,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "2d4d467c647622ebf994f792424cde7f0aa8c5c7d28b79d7b92bd6666ff3a064"
+  inputs-digest = "8a9646d443f8477dda725a948eff15dafa64ef9249255706ffc8e336409d2cbc"
   solver-name = "gps-cdcl"
   solver-version = 1

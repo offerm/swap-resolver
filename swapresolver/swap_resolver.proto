@@ -18,6 +18,11 @@ service SwapResolver {
 
 }
 
+enum CoinType {
+    BTC = 0;
+    LTC = 1;
+}
+
 // 6
 message ResolveReq {
   string hash = 1 ;
@@ -71,14 +76,13 @@ executeTime
 competionTime
 */
 
-
 // 1 - CLI to taker
 message TakeOrderReq{
   string orderid = 1 ;  // global order ID on XUD system
   int64 taker_amount = 2 ;
-  string taker_coin = 3 ;
+  CoinType taker_coin = 3 ;
   int64 maker_amount = 4 ;
-  string maker_coin =5 ;
+  CoinType maker_coin =5 ;
 }
 
 // 14 taker to CLI
@@ -91,9 +95,9 @@ message SuggestDealReq{
   string orderid = 1 ;  // global order ID on XUD system
   string taker_deal_id = 2 ;
   int64 taker_amount = 3 ;
-  string taker_coin = 4 ;
+  CoinType taker_coin = 4 ;
   int64 maker_amount = 5 ;
-  string maker_coin = 6 ;
+  CoinType maker_coin = 6 ;
   string taker_pubkey = 7 ; // on taker coin network
 }
 // 3 from maker back to taker
