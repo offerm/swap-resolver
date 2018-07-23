@@ -1,5 +1,6 @@
 
 package main
+// TODO: seperate resolver RPC into a standalone package
 
 import (
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"net"
 	"sync"
 	//"time"
+	"crypto/rand"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -24,6 +26,19 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"time"
 	"github.com/dchest/uniuri"
+	//"github.com/lightningnetwork/lnd/macaroons"
+	//"github.com/lightningnetwork/lnd/lncfg"
+	"github.com/lightningnetwork/lnd/lnrpc"
+	"github.com/btcsuite/btcutil"
+	"path/filepath"
+	"google.golang.org/grpc/credentials"
+	//"io/ioutil"
+	//"gopkg.in/macaroon.v2"
+	//"strings"
+	//"os/user"
+	//"github.com/lightningnetwork/lnd/macaroons"
+	//"github.com/lightningnetwork/lnd/lncfg"
+	"crypto/sha256"
 )
 
 type swapResolverServer struct {
@@ -33,6 +48,12 @@ type swapResolverServer struct {
 type role int
 
 const (
+	defaultTLSCertFilename  = "tls.cert"
+	defaultMacaroonFilename = "admin.macaroon"
+	defaultRpcPort          = "10009"
+	defaultRpcHostPort      = "localhost:" + defaultRpcPort
+
+
 	Maker role = iota + 1
 	Taker
 )
@@ -57,7 +78,6 @@ type deal struct {
 	createTime	time.Time
 	executeTime	time.Time
 	competionTime	time.Time
-
 }
 
 
@@ -71,7 +91,11 @@ var (
 	//set using -ldflags during compilation.
 	Commit string
 
-	deals []deal
+	deals []*deal
+
+	defaultLndDir       = btcutil.AppDataDir("lnd", false)
+	defaultTLSCertPath  = filepath.Join(defaultLndDir, defaultTLSCertFilename)
+	defaultMacaroonPath = filepath.Join(defaultLndDir, defaultMacaroonFilename)
 
 )
 
@@ -99,8 +123,10 @@ func newServer() *swapResolverServer {
 
 
 type P2PServer struct {
-	peer 	   pb.P2PClient
-	mu         sync.Mutex // protects data structure
+	xuPeer 	   	pb.P2PClient
+	lnLTC 		lnrpc.LightningClient
+	lnBTC		lnrpc.LightningClient
+	mu     	    sync.Mutex // protects data structure
 }
 
 // TakeOrder is called to initiate a swap between maker and taker
@@ -108,13 +134,40 @@ type P2PServer struct {
 // intended to be called from CLI to simulate order taking by taker
 func (s *P2PServer) TakeOrder(ctx context.Context, req *pb.TakeOrderReq) (*pb.TakeOrderResp, error){
 
-	log.Printf("TakeOrder stating with %v: ",spew.Sdump(req))
+	log.Printf("TakeOrder (maker) stating with %v: ",spew.Sdump(req))
+
+	ctxt, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	var (
+		info *lnrpc.GetInfoResponse
+		err 	error
+	)
+
+	switch req.TakerCoin{
+	case pb.CoinType_BTC:
+		info, err = s.lnBTC.GetInfo(ctxt, &lnrpc.GetInfoRequest{})
+		if err != nil{
+			return nil,fmt.Errorf("Can't getInfo from BTC LND - %v", err)
+		}
+
+	case pb.CoinType_LTC:
+		info, err = s.lnLTC.GetInfo(ctxt, &lnrpc.GetInfoRequest{})
+		if err != nil{
+			return nil,fmt.Errorf("Can't getInfo from LTC LND - %v", err)
+		}
+
+	}
+	log.Printf("%v getinfo:%v",req.TakerCoin.String(),spew.Sdump(info))
+	spew.Sdump(info)
+
 	newDeal := deal{
 		myRole:			Taker,
 		orderId:		req.Orderid,
 		takerDealId:	uniuri.New(),
 		takerAmount:	req.TakerAmount,
 		takerCoin:		req.TakerCoin,
+		takerPubKey:	info.IdentityPubkey,
 		makerAmount:	req.MakerAmount,
 		makerCoin:		req.MakerCoin,
 		createTime:     time.Now(),
@@ -122,16 +175,14 @@ func (s *P2PServer) TakeOrder(ctx context.Context, req *pb.TakeOrderReq) (*pb.Ta
 
 	log.Printf("Suggesting deal to peer. deal data %v: ",spew.Sdump(newDeal))
 
-	// TODO: takerPubKey
-
-	suggestDealResp, err := s.peer.SuggestDeal(ctx, &pb.SuggestDealReq{
+	suggestDealResp, err := s.xuPeer.SuggestDeal(ctx, &pb.SuggestDealReq{
 		Orderid: 		newDeal.orderId,
 		TakerCoin: 		newDeal.takerCoin,
-		TakerAmount:	req.TakerAmount,
+		TakerAmount:	newDeal.takerAmount,
 		TakerDealId:	newDeal.takerDealId,
 		TakerPubkey:	newDeal.takerPubKey,
-		MakerCoin:		req.MakerCoin,
-		MakerAmount: 	req.MakerAmount,
+		MakerCoin:		newDeal.makerCoin,
+		MakerAmount: 	newDeal.makerAmount,
 	})
 	if err != nil{
 		err = fmt.Errorf("SuggestDeal failed with %v", err)
@@ -144,14 +195,16 @@ func (s *P2PServer) TakeOrder(ctx context.Context, req *pb.TakeOrderReq) (*pb.Ta
 
 	log.Printf("Deal Agreed with maker. deal data %v: ",spew.Sdump(newDeal))
 
-	deals = append(deals, newDeal)
+	// TODO: protect data structure
+	deals = append(deals, &newDeal)
+	newDeal.executeTime = time.Now()
 
 
-	swapResp, err := s.peer.Swap(ctx, &pb.SwapReq{
+	swapResp, err := s.xuPeer.Swap(ctx, &pb.SwapReq{
 		MakerDealId:  suggestDealResp.MakerDealId,
 	})
 	if err != nil{
-		log.Fatal("Swap failed with %v", err)
+		err = fmt.Errorf("Swap failed with %v", err)
 		return nil, err
 	}
 
@@ -168,6 +221,34 @@ func (s *P2PServer) TakeOrder(ctx context.Context, req *pb.TakeOrderReq) (*pb.Ta
 // with a hash that would be used for teh swap.
 func (s *P2PServer) SuggestDeal(ctx context.Context, req *pb.SuggestDealReq) (*pb.SuggestDealResp, error){
 
+	log.Printf("SuggestDeal (taker) stating with %v: ",spew.Sdump(req))
+
+	ctxt, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	var (
+		info *lnrpc.GetInfoResponse
+		err 	error
+	)
+
+	switch req.MakerCoin{
+	case pb.CoinType_BTC:
+		info, err = s.lnBTC.GetInfo(ctxt, &lnrpc.GetInfoRequest{})
+		if err != nil{
+			return nil,fmt.Errorf("Can't getInfo from BTC LND - %v", err)
+		}
+
+	case pb.CoinType_LTC:
+		info, err = s.lnLTC.GetInfo(ctxt, &lnrpc.GetInfoRequest{})
+		if err != nil{
+			return nil,fmt.Errorf("Can't getInfo from LTC LND - %v", err)
+		}
+	}
+	log.Printf("%v getinfo:%v",req.TakerCoin.String(),spew.Sdump(info))
+	spew.Sdump(info)
+
+
+
 	newDeal := deal{
 		myRole:			Maker,
 		orderId:		req.Orderid,
@@ -175,7 +256,7 @@ func (s *P2PServer) SuggestDeal(ctx context.Context, req *pb.SuggestDealReq) (*p
 		takerAmount:	req.TakerAmount,
 		takerCoin:		req.TakerCoin,
 		takerPubKey: 	req.TakerPubkey,
-		makerPubKey: 	"TODO",
+		makerPubKey: 	info.IdentityPubkey,
 		makerAmount:	req.MakerAmount,
 		makerCoin:		req.MakerCoin,
 		makerDealId: 	uniuri.New(),
@@ -188,31 +269,82 @@ func (s *P2PServer) SuggestDeal(ctx context.Context, req *pb.SuggestDealReq) (*p
 		createTime:		time.Now(),
 	}
 
-	//TODO: makerPubKey,hash, preimage
+	// create preimage and a hash for the deal
+	if _, err := rand.Read(newDeal.preImage[:]); err != nil {
+		return nil, fmt.Errorf("Cant create preimage - %v", err)
+	}
 
-	deals = append(deals, newDeal)
+	newDeal.hash = sha256.Sum256(newDeal.preImage[:])
+
+
+	deals = append(deals, &newDeal)
 
 	ret := pb.SuggestDealResp{
 		Orderid: 	newDeal.orderId,
 		RHash:		newDeal.hash[:],
 		MakerDealId:newDeal.makerDealId,
+		MakerPubkey:newDeal.makerPubKey,
 	}
 	return &ret, nil
 }
 // Swap initiates the swap. It is called by the taker to confirm that
 // he has the hash and confirm the deal.
 func (s *P2PServer) Swap(ctx context.Context, req *pb.SwapReq) (*pb.SwapResp, error) {
-	deal := deals[0]
-	// TODO - find the deal base on deal ID
+	var deal *deal
+
+	log.Printf("Swap (maker) stating with: %v ",spew.Sdump(req))
+
+	for _, d := range deals{
+		if d.makerDealId == req.MakerDealId{
+			deal = d
+			break
+		}
+	}
+
+	if deal == nil{
+		return nil, fmt.Errorf("Something went wrong. Can't find maker deal in swap")
+	}
+
+	cmdLnd := s.lnLTC
+
+	switch deal.makerCoin{
+	case pb.CoinType_BTC:
+
+	case pb.CoinType_LTC:
+		cmdLnd = s.lnBTC
+
+	}
+
+	lncctx := context.Background()
+	resp, err := cmdLnd.SendPaymentSync(lncctx,&lnrpc.SendRequest{
+		DestString:deal.takerPubKey,
+		Amt:deal.takerAmount,
+		PaymentHash:deal.hash[:],
+	})
+
+	if err != nil{
+		return nil, fmt.Errorf("Got error sending  %d %v by maker - %v",
+			deal.takerAmount,deal.takerCoin.String(),err)
+	}
+
+	if resp.PaymentError != ""{
+		return nil, fmt.Errorf("Got error sending %d %v by maker - %v",
+			deal.takerAmount,deal.takerCoin.String(), resp.PaymentError)
+	}
+
+	log.Printf("sendPayment response:%v",spew.Sdump(resp))
+
 	ret := &pb.SwapResp{
 		RPreimage: 	deal.preImage[:],
 	}
 	return ret, nil
 }
 
-func newP2PServer(peer pb.P2PClient) *P2PServer {
+func newP2PServer(xuPeer pb.P2PClient, lnLTC lnrpc.LightningClient, lnBTC lnrpc.LightningClient) *P2PServer {
 	s := &P2PServer{
-		peer: peer,
+		xuPeer: xuPeer,
+		lnLTC: lnLTC,
+		lnBTC: lnBTC,
 	}
 	return s
 }
@@ -263,12 +395,29 @@ func main() {
 			Value: "a.b.com:10000",
 			Usage: "A host:port of peer xu daemon",
 		},
+		cli.StringFlag{
+			Name:  "lnd-rpc-ltc",
+			Value: "localhost:10001",
+			Usage: "RPC host:port of LND connected to LTC chain",
+		},
+		cli.StringFlag{
+			Name:  "lnd-rpc-btc",
+			Value: "localhost:10002",
+			Usage: "RPC host:port of LND connected to LTC chain",
+		},
+
 	}
 
 	app.Action = func(c *cli.Context) error {
 		log.Printf("Server starting")
 
-		peer, close := getClient(c)
+		lnLTC, close := getLNDClient(c,"lnd-rpc-ltc")
+		defer close()
+
+		lnBTC, close := getLNDClient(c,"lnd-rpc-btc")
+		defer close()
+
+		xuPeer, close := getClient(c)
 		defer close()
 		log.Printf("Got peer connection")
 
@@ -282,7 +431,7 @@ func main() {
 		var opts []grpc.ServerOption
 		grpcServer := grpc.NewServer(opts...)
 		pb.RegisterSwapResolverServer(grpcServer, newServer())
-		pb.RegisterP2PServer(grpcServer, newP2PServer(peer))
+		pb.RegisterP2PServer(grpcServer, newP2PServer(xuPeer, lnLTC, lnBTC))
 		log.Printf("Server ready")
 		grpcServer.Serve(lis)
 
@@ -294,4 +443,34 @@ func main() {
 		fatal(err)
 	}
 
+}
+
+func getLNDClient(ctx *cli.Context, name string) (lnrpc.LightningClient, func()) {
+	conn := getLNDClientConn(ctx, false, name)
+
+	cleanUp := func() {
+		conn.Close()
+	}
+
+	return lnrpc.NewLightningClient(conn), cleanUp
+}
+
+func getLNDClientConn(ctx *cli.Context, skipMacaroons bool, name string) *grpc.ClientConn {
+	creds, err := credentials.NewClientTLSFromFile(defaultTLSCertPath, "")
+	if err != nil {
+		fatal(err)
+	}
+
+	// Create a dial options array.
+	opts := []grpc.DialOption{
+		grpc.WithTransportCredentials(creds),
+	}
+
+
+	conn, err := grpc.Dial(ctx.String(name), opts...)
+	if err != nil {
+		fatal(err)
+	}
+
+	return conn
 }
