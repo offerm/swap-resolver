@@ -42,6 +42,7 @@ import (
 )
 
 type swapResolverServer struct {
+	p2pServer *P2PServer
 	mu         sync.Mutex // protects data structure
 }
 
@@ -101,23 +102,88 @@ var (
 
 
 // GetFeature returns the feature at the given point.
-func (s *swapResolverServer) ResolveHash(ctx context.Context, point *pb.ResolveReq) (*pb.ResolveResp, error) {
+func (s *swapResolverServer) ResolveHash(ctx context.Context, req *pb.ResolveReq) (*pb.ResolveResp, error) {
 
-		preimage := [32]byte{
-			0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
-			0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
-			0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
-			0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
+	var deal *deal
+
+	log.Printf("ResolveHash stating with for hash: %v ",req.Hash)
+
+	for _, d := range deals{
+		if string(d.hash[:]) == req.Hash{
+			deal = d
+			break
+		}
+	}
+
+	if deal == nil{
+		log.Printf("Something went wrong. Can't find deal in swapResolverServer: %v ",req.Hash)
+		return nil, fmt.Errorf("Something went wrong. Can't find deal in swapResolverServer")
+	}
+
+	// If I'm the taker I need to forward the payment to the other chanin
+	// TODO: check that I got the right amount before sending out the agreed amount
+	if deal.myRole == Taker{
+
+		log.Printf("Taker code")
+
+		cmdLnd := s.p2pServer.lnBTC
+
+		switch deal.makerCoin{
+		case pb.CoinType_BTC:
+
+		case pb.CoinType_LTC:
+			cmdLnd = s.p2pServer.lnLTC
+
 		}
 
+		lncctx := context.Background()
+		resp, err := cmdLnd.SendPaymentSync(lncctx,&lnrpc.SendRequest{
+			DestString:deal.makerPubKey,
+			Amt:deal.makerAmount,
+			PaymentHash:deal.hash[:],
+		})
+		if err != nil{
+			err = fmt.Errorf("Got error sending  %d %v by taker - %v",
+				deal.makerAmount,deal.makerCoin.String(),err)
+			log.Printf(err.Error())
+			return nil, err
+		}
+		if resp.PaymentError != ""{
+			err = fmt.Errorf("Got PaymentError sending %d %v by taker - %v",
+				deal.makerAmount,deal.makerCoin.String(), resp.PaymentError)
+			log.Printf(err.Error())
+			return nil, err
+		}
+
+		log.Printf("sendPayment response from maker to taker:%v",spew.Sdump(resp))
+
+
 		return &pb.ResolveResp{
-		Preimage: string(preimage[:]),
+			Preimage: string(resp.PaymentPreimage[:]),
+		}, nil
+	}
+
+	// If we are here we are the maker
+	log.Printf("Maker code")
+
+	//preimage := [32]byte{
+	//		0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
+	//		0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
+	//		0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
+	//		0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
+	//	}
+
+	return &pb.ResolveResp{
+		Preimage: string(deal.preImage[:]),
 	}, nil
+
 }
 
 
-func newServer() *swapResolverServer {
-	s := &swapResolverServer{}
+func newServer(p2pServer *P2PServer) *swapResolverServer {
+	s := &swapResolverServer{
+		p2pServer: p2pServer,
+	}
 	return s
 }
 
@@ -430,8 +496,9 @@ func main() {
 
 		var opts []grpc.ServerOption
 		grpcServer := grpc.NewServer(opts...)
-		pb.RegisterSwapResolverServer(grpcServer, newServer())
-		pb.RegisterP2PServer(grpcServer, newP2PServer(xuPeer, lnLTC, lnBTC))
+		p2pServer := newP2PServer(xuPeer, lnLTC, lnBTC)
+		pb.RegisterSwapResolverServer(grpcServer, newServer(p2pServer))
+		pb.RegisterP2PServer(grpcServer, p2pServer)
 		log.Printf("Server ready")
 		grpcServer.Serve(lis)
 

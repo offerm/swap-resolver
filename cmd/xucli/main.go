@@ -9,6 +9,8 @@ import (
 	pb "github.com/offerm/swap-resolver/swapresolver"
 	"os"
 	"fmt"
+	"encoding/hex"
+	"github.com/davecgh/go-spew/spew"
 )
 
 const (
@@ -89,7 +91,6 @@ var takeordercommand = cli.Command{
 	Usage:    "Instruct XUD to take an order.",
 	Description: `
 	`,
-	//ArgsUsage: "order_id maker_amount maker_coin taker_amount taker_coin",
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name:  "order_id",
@@ -121,9 +122,6 @@ func takeOrder(ctx *cli.Context) error{
 
 	client, cleanUp := getClient(ctx)
 	defer cleanUp()
-
-	//args := ctx.Args()
-	//var err error
 
 	// Show command help if no arguments provided
 	if ctx.NArg() == 0 && ctx.NumFlags() == 0 {
@@ -179,14 +177,14 @@ func takeOrder(ctx *cli.Context) error{
 	}
 
 
-	log.Printf("Starting takeOrder command: %v",req)
-	ctxt, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	log.Printf("Starting takeOrder command -  %s",spew.Sdump(req))
+	ctxt, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	preimage, err := client.TakeOrder(ctxt, req)
+	resp, err := client.TakeOrder(ctxt, req)
 	if err != nil {
 		log.Fatalf("%v.ResolveHash(_) = _, %v: ", client, err)
 	}
-	log.Printf("Got response from Resolver: %v \n",preimage)
+	log.Printf("Swap completed successfully.\n  Swap preImage is  %v \n",hex.EncodeToString(resp.RPreimage))
 
 
 	return nil;
