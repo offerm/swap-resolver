@@ -1,6 +1,7 @@
 
 package main
 // TODO: seperate resolver RPC into a standalone package
+// TODO: properly handle the time locks - Important!!!!
 
 import (
 	"fmt"
