@@ -34,12 +34,6 @@
   revision = "8902c56451e9b58ff940bbe5fec35d5f9c04584a"
 
 [[projects]]
-  name = "github.com/golang/mock"
-  packages = ["gomock"]
-  revision = "c34cdb4725f4c3844d095133c6e40e448b86589b"
-  version = "v1.1.1"
-
-[[projects]]
   name = "github.com/golang/protobuf"
   packages = [
     "jsonpb",
@@ -126,8 +120,6 @@
     "codes",
     "connectivity",
     "credentials",
-    "examples/route_guide/mock_routeguide",
-    "examples/route_guide/routeguide",
     "grpclb/grpc_lb_v1",
     "grpclog",
     "internal",
@@ -145,6 +137,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "cadd5246a5f48a92729364ec9dc03653de44fad96477e8c5f3ed4ccf72ed0f3f"
+  inputs-digest = "b4b25370f0c5f82b476e9082f89e0963229b65d419abd961fddd19cec3928b32"
   solver-name = "gps-cdcl"
   solver-version = 1
