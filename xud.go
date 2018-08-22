@@ -22,6 +22,7 @@ import (
 	//"github.com/golang/protobuf/proto"
 
 	pb "github.com/offerm/swap-resolver/swapresolver"
+	pbp2p "github.com/offerm/swap-resolver/swapp2p"
 	"github.com/urfave/cli"
 	"os"
 	"github.com/davecgh/go-spew/spew"
@@ -68,12 +69,12 @@ type deal struct {
 	takerDealId string
 	takerAmount int64
 	// takerCoin is the name of the coin the taker is expecting to get
-	takerCoin   pb.CoinType
+	takerCoin   pbp2p.CoinType
 	takerPubKey string
 	makerDealId string
 	makerAmount int64
 	// makerCoin is the name of the coin the maker is expecting to get
-	makerCoin   pb.CoinType
+	makerCoin   pbp2p.CoinType
 	makerPubKey string
 	hash		[32]byte
 	preImage	[32]byte
@@ -103,7 +104,7 @@ var (
 
 
 // GetFeature returns the feature at the given point.
-func (s *swapResolverServer) ResolveHash(ctx context.Context, req *pb.ResolveReq) (*pb.ResolveResp, error) {
+func (s *swapResolverServer) ResolveHash(ctx context.Context, req *pb.ResolveRequest) (*pb.ResolveResponse, error) {
 
 	var deal *deal
 
@@ -130,9 +131,9 @@ func (s *swapResolverServer) ResolveHash(ctx context.Context, req *pb.ResolveReq
 		cmdLnd := s.p2pServer.lnBTC
 
 		switch deal.makerCoin{
-		case pb.CoinType_BTC:
+		case pbp2p.CoinType_BTC:
 
-		case pb.CoinType_LTC:
+		case pbp2p.CoinType_LTC:
 			cmdLnd = s.p2pServer.lnLTC
 
 		}
@@ -159,7 +160,7 @@ func (s *swapResolverServer) ResolveHash(ctx context.Context, req *pb.ResolveReq
 		log.Printf("sendPayment response from maker to taker:%v",spew.Sdump(resp))
 
 
-		return &pb.ResolveResp{
+		return &pb.ResolveResponse{
 			Preimage: string(resp.PaymentPreimage[:]),
 		}, nil
 	}
@@ -167,7 +168,7 @@ func (s *swapResolverServer) ResolveHash(ctx context.Context, req *pb.ResolveReq
 	// If we are here we are the maker
 	log.Printf("Maker code")
 
-	return &pb.ResolveResp{
+	return &pb.ResolveResponse{
 		Preimage: string(deal.preImage[:]),
 	}, nil
 
@@ -183,7 +184,7 @@ func newServer(p2pServer *P2PServer) *swapResolverServer {
 
 
 type P2PServer struct {
-	xuPeer 	   	pb.P2PClient
+	xuPeer 	   	pbp2p.P2PClient
 	lnLTC 		lnrpc.LightningClient
 	lnBTC		lnrpc.LightningClient
 	mu     	    sync.Mutex // protects data structure
@@ -192,7 +193,7 @@ type P2PServer struct {
 // TakeOrder is called to initiate a swap between maker and taker
 // it is a temporary service needed until the integration with XUD
 // intended to be called from CLI to simulate order taking by taker
-func (s *P2PServer) TakeOrder(ctx context.Context, req *pb.TakeOrderReq) (*pb.TakeOrderResp, error){
+func (s *P2PServer) TakeOrder(ctx context.Context, req *pbp2p.TakeOrderReq) (*pbp2p.TakeOrderResp, error){
 
 	log.Printf("TakeOrder (maker) stating with %v: ",spew.Sdump(req))
 
@@ -205,13 +206,13 @@ func (s *P2PServer) TakeOrder(ctx context.Context, req *pb.TakeOrderReq) (*pb.Ta
 	)
 
 	switch req.TakerCoin{
-	case pb.CoinType_BTC:
+	case pbp2p.CoinType_BTC:
 		info, err = s.lnBTC.GetInfo(ctxt, &lnrpc.GetInfoRequest{})
 		if err != nil{
 			return nil,fmt.Errorf("Can't getInfo from BTC LND - %v", err)
 		}
 
-	case pb.CoinType_LTC:
+	case pbp2p.CoinType_LTC:
 		info, err = s.lnLTC.GetInfo(ctxt, &lnrpc.GetInfoRequest{})
 		if err != nil{
 			return nil,fmt.Errorf("Can't getInfo from LTC LND - %v", err)
@@ -235,7 +236,7 @@ func (s *P2PServer) TakeOrder(ctx context.Context, req *pb.TakeOrderReq) (*pb.Ta
 
 	log.Printf("Suggesting deal to peer. deal data %v: ",spew.Sdump(newDeal))
 
-	suggestDealResp, err := s.xuPeer.SuggestDeal(ctx, &pb.SuggestDealReq{
+	suggestDealResp, err := s.xuPeer.SuggestDeal(ctx, &pbp2p.SuggestDealReq{
 		Orderid: 		newDeal.orderId,
 		TakerCoin: 		newDeal.takerCoin,
 		TakerAmount:	newDeal.takerAmount,
@@ -260,7 +261,7 @@ func (s *P2PServer) TakeOrder(ctx context.Context, req *pb.TakeOrderReq) (*pb.Ta
 	newDeal.executeTime = time.Now()
 
 
-	swapResp, err := s.xuPeer.Swap(ctx, &pb.SwapReq{
+	swapResp, err := s.xuPeer.Swap(ctx, &pbp2p.SwapReq{
 		MakerDealId:  suggestDealResp.MakerDealId,
 	})
 	if err != nil{
@@ -269,7 +270,7 @@ func (s *P2PServer) TakeOrder(ctx context.Context, req *pb.TakeOrderReq) (*pb.Ta
 	}
 
 
-	ret := &pb.TakeOrderResp{
+	ret := &pbp2p.TakeOrderResp{
 		RPreimage:  swapResp.RPreimage,
 	}
 	return ret, nil
@@ -279,7 +280,7 @@ func (s *P2PServer) TakeOrder(ctx context.Context, req *pb.TakeOrderReq) (*pb.Ta
 // for now, the maker can only accept/reject and can't rediscuss the
 // deal or suggest partial amount. If accepted the maker should respond
 // with a hash that would be used for teh swap.
-func (s *P2PServer) SuggestDeal(ctx context.Context, req *pb.SuggestDealReq) (*pb.SuggestDealResp, error){
+func (s *P2PServer) SuggestDeal(ctx context.Context, req *pbp2p.SuggestDealReq) (*pbp2p.SuggestDealResp, error){
 
 	log.Printf("SuggestDeal (taker) stating with %v: ",spew.Sdump(req))
 
@@ -292,13 +293,13 @@ func (s *P2PServer) SuggestDeal(ctx context.Context, req *pb.SuggestDealReq) (*p
 	)
 
 	switch req.MakerCoin{
-	case pb.CoinType_BTC:
+	case pbp2p.CoinType_BTC:
 		info, err = s.lnBTC.GetInfo(ctxt, &lnrpc.GetInfoRequest{})
 		if err != nil{
 			return nil,fmt.Errorf("Can't getInfo from BTC LND - %v", err)
 		}
 
-	case pb.CoinType_LTC:
+	case pbp2p.CoinType_LTC:
 		info, err = s.lnLTC.GetInfo(ctxt, &lnrpc.GetInfoRequest{})
 		if err != nil{
 			return nil,fmt.Errorf("Can't getInfo from LTC LND - %v", err)
@@ -339,7 +340,7 @@ func (s *P2PServer) SuggestDeal(ctx context.Context, req *pb.SuggestDealReq) (*p
 
 	deals = append(deals, &newDeal)
 
-	ret := pb.SuggestDealResp{
+	ret := pbp2p.SuggestDealResp{
 		Orderid: 	newDeal.orderId,
 		RHash:		newDeal.hash[:],
 		MakerDealId:newDeal.makerDealId,
@@ -349,7 +350,7 @@ func (s *P2PServer) SuggestDeal(ctx context.Context, req *pb.SuggestDealReq) (*p
 }
 // Swap initiates the swap. It is called by the taker to confirm that
 // he has the hash and confirm the deal.
-func (s *P2PServer) Swap(ctx context.Context, req *pb.SwapReq) (*pb.SwapResp, error) {
+func (s *P2PServer) Swap(ctx context.Context, req *pbp2p.SwapReq) (*pbp2p.SwapResp, error) {
 	var deal *deal
 
 	log.Printf("Swap (maker) stating with: %v ",spew.Sdump(req))
@@ -368,9 +369,9 @@ func (s *P2PServer) Swap(ctx context.Context, req *pb.SwapReq) (*pb.SwapResp, er
 	cmdLnd := s.lnLTC
 
 	switch deal.makerCoin{
-	case pb.CoinType_BTC:
+	case pbp2p.CoinType_BTC:
 
-	case pb.CoinType_LTC:
+	case pbp2p.CoinType_LTC:
 		cmdLnd = s.lnBTC
 
 	}
@@ -394,13 +395,13 @@ func (s *P2PServer) Swap(ctx context.Context, req *pb.SwapReq) (*pb.SwapResp, er
 
 	log.Printf("sendPayment response:%v",spew.Sdump(resp))
 
-	ret := &pb.SwapResp{
+	ret := &pbp2p.SwapResp{
 		RPreimage: 	deal.preImage[:],
 	}
 	return ret, nil
 }
 
-func newP2PServer(xuPeer pb.P2PClient, lnLTC lnrpc.LightningClient, lnBTC lnrpc.LightningClient) *P2PServer {
+func newP2PServer(xuPeer pbp2p.P2PClient, lnLTC lnrpc.LightningClient, lnBTC lnrpc.LightningClient) *P2PServer {
 	s := &P2PServer{
 		xuPeer: xuPeer,
 		lnLTC: lnLTC,
@@ -414,14 +415,14 @@ func fatal(err error) {
 	os.Exit(1)
 }
 
-func getClient(ctx *cli.Context) (pb.P2PClient, func()) {
+func getClient(ctx *cli.Context) (pbp2p.P2PClient, func()) {
 	conn := getPeerConn(ctx, false)
 
 	cleanUp := func() {
 		conn.Close()
 	}
 
-	return pb.NewP2PClient(conn), cleanUp
+	return pbp2p.NewP2PClient(conn), cleanUp
 }
 
 func getPeerConn(ctx *cli.Context, skipMacaroons bool) *grpc.ClientConn {
@@ -492,7 +493,7 @@ func main() {
 		grpcServer := grpc.NewServer(opts...)
 		p2pServer := newP2PServer(xuPeer, lnLTC, lnBTC)
 		pb.RegisterSwapResolverServer(grpcServer, newServer(p2pServer))
-		pb.RegisterP2PServer(grpcServer, p2pServer)
+		pbp2p.RegisterP2PServer(grpcServer, p2pServer)
 		log.Printf("Server ready")
 		grpcServer.Serve(lis)
 

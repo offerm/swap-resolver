@@ -6,7 +6,7 @@ import (
 	"github.com/urfave/cli"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	pb "github.com/offerm/swap-resolver/swapresolver"
+	pb "github.com/offerm/swap-resolver/swapp2p"
 	"os"
 	"fmt"
 	"encoding/hex"

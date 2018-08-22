@@ -16,52 +16,13 @@
   ],
   "paths": {},
   "definitions": {
-    "swapresolverResolveResp": {
+    "swapresolverResolveResponse": {
       "type": "object",
       "properties": {
         "preimage": {
           "type": "string"
         }
       }
-    },
-    "swapresolverSuggestDealResp": {
-      "type": "object",
-      "properties": {
-        "orderid": {
-          "type": "string"
-        },
-        "r_hash": {
-          "type": "string",
-          "format": "byte"
-        },
-        "maker_deal_id": {
-          "type": "string"
-        },
-        "maker_pubkey": {
-          "type": "string"
-        }
-      },
-      "title": "3 from maker back to taker"
-    },
-    "swapresolverSwapResp": {
-      "type": "object",
-      "properties": {
-        "r_preimage": {
-          "type": "string",
-          "format": "byte"
-        }
-      },
-      "title": "13 maker to taker"
-    },
-    "swapresolverTakeOrderResp": {
-      "type": "object",
-      "properties": {
-        "r_preimage": {
-          "type": "string",
-          "format": "byte"
-        }
-      },
-      "title": "14 taker to CLI"
     }
   }
 }
