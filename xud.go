@@ -12,6 +12,7 @@ import (
 	"net"
 	"sync"
 	//"time"
+	"encoding/hex"
 	"crypto/rand"
 
 	"golang.org/x/net/context"
@@ -111,7 +112,7 @@ func (s *swapResolverServer) ResolveHash(ctx context.Context, req *pb.ResolveReq
 	log.Printf("ResolveHash stating with for hash: %v ",req.Hash)
 
 	for _, d := range deals{
-		if string(d.hash[:]) == req.Hash{
+		if hex.EncodeToString(d.hash[:]) == req.Hash{
 			deal = d
 			break
 		}
@@ -161,7 +162,7 @@ func (s *swapResolverServer) ResolveHash(ctx context.Context, req *pb.ResolveReq
 
 
 		return &pb.ResolveResponse{
-			Preimage: string(resp.PaymentPreimage[:]),
+			Preimage: hex.EncodeToString(resp.PaymentPreimage[:]),
 		}, nil
 	}
 
@@ -169,7 +170,7 @@ func (s *swapResolverServer) ResolveHash(ctx context.Context, req *pb.ResolveReq
 	log.Printf("Maker code")
 
 	return &pb.ResolveResponse{
-		Preimage: string(deal.preImage[:]),
+		Preimage: hex.EncodeToString(deal.preImage[:]),
 	}, nil
 
 }
