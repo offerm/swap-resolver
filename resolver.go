@@ -22,8 +22,10 @@ import (
 
 	//"github.com/golang/protobuf/proto"
 
-	pb "github.com/ExchangeUnion/swap-resolver/swapresolver"
-	pbp2p "github.com/ExchangeUnion/swap-resolver/swapp2p"
+	//pb "github.com/ExchangeUnion/swap-resolver/swapresolver"
+	pb "github.com/offerm/swap-resolver/swapresolver"
+	//pbp2p "github.com/ExchangeUnion/swap-resolver/swapp2p"
+	pbp2p "github.com/offerm/swap-resolver/swapp2p"
 	"github.com/urfave/cli"
 	"os"
 	"github.com/davecgh/go-spew/spew"
@@ -443,7 +445,7 @@ func getPeerConn(ctx *cli.Context, skipMacaroons bool) *grpc.ClientConn {
 func main() {
 
 	app := cli.NewApp()
-	app.Name = "xud"
+	app.Name = "resolver"
 	app.Version = fmt.Sprintf("%s commit=%s", "0.0.1", Commit)
 	app.Usage = "Use me to simulate order taking by the taker"
 	app.Flags = []cli.Flag{
