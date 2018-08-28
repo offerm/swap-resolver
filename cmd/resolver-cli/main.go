@@ -6,7 +6,7 @@ import (
 	"github.com/urfave/cli"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	pb "github.com/offerm/swap-resolver/swapp2p"
+	pb "github.com/ExchangeUnion/swap-resolver/swapp2p"
 	"os"
 	"fmt"
 	"encoding/hex"
@@ -27,14 +27,14 @@ var (
 
 func main() {
 	app := cli.NewApp()
-	app.Name = "xucli"
+	app.Name = "resolver-cli"
 	app.Version = fmt.Sprintf("%s commit=%s", "0.0.1", Commit)
 	app.Usage = "Use me to simulate order taking by the taker"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "rpcserver",
 			Value: defaultRpcHostPort,
-			Usage: "host:port of xu daemon",
+			Usage: "host:port of resolver daemon",
 		},
 	}
 	app.Commands = []cli.Command{
@@ -88,7 +88,7 @@ func getClientConn(ctx *cli.Context, skipMacaroons bool) *grpc.ClientConn {
 var takeordercommand = cli.Command{
 	Name:     "takeorder",
 	Category: "Order",
-	Usage:    "Instruct XUD to take an order.",
+	Usage:    "Instruct resolver to take an order.",
 	Description: `
 	`,
 	Flags: []cli.Flag{
