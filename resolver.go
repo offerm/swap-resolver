@@ -12,6 +12,7 @@ import (
 	"net"
 	"sync"
 	//"time"
+	"encoding/hex"
 	"crypto/rand"
 
 	"golang.org/x/net/context"
@@ -21,7 +22,9 @@ import (
 
 	//"github.com/golang/protobuf/proto"
 
+	//pb "github.com/ExchangeUnion/swap-resolver/swapresolver"
 	pb "github.com/offerm/swap-resolver/swapresolver"
+	//pbp2p "github.com/ExchangeUnion/swap-resolver/swapp2p"
 	pbp2p "github.com/offerm/swap-resolver/swapp2p"
 	"github.com/urfave/cli"
 	"os"
@@ -111,7 +114,7 @@ func (s *swapResolverServer) ResolveHash(ctx context.Context, req *pb.ResolveReq
 	log.Printf("ResolveHash stating with for hash: %v ",req.Hash)
 
 	for _, d := range deals{
-		if string(d.hash[:]) == req.Hash{
+		if hex.EncodeToString(d.hash[:]) == req.Hash{
 			deal = d
 			break
 		}
@@ -161,7 +164,7 @@ func (s *swapResolverServer) ResolveHash(ctx context.Context, req *pb.ResolveReq
 
 
 		return &pb.ResolveResponse{
-			Preimage: string(resp.PaymentPreimage[:]),
+			Preimage: hex.EncodeToString(resp.PaymentPreimage[:]),
 		}, nil
 	}
 
@@ -169,7 +172,7 @@ func (s *swapResolverServer) ResolveHash(ctx context.Context, req *pb.ResolveReq
 	log.Printf("Maker code")
 
 	return &pb.ResolveResponse{
-		Preimage: string(deal.preImage[:]),
+		Preimage: hex.EncodeToString(deal.preImage[:]),
 	}, nil
 
 }
@@ -442,7 +445,7 @@ func getPeerConn(ctx *cli.Context, skipMacaroons bool) *grpc.ClientConn {
 func main() {
 
 	app := cli.NewApp()
-	app.Name = "xud"
+	app.Name = "resolver"
 	app.Version = fmt.Sprintf("%s commit=%s", "0.0.1", Commit)
 	app.Usage = "Use me to simulate order taking by the taker"
 	app.Flags = []cli.Flag{
