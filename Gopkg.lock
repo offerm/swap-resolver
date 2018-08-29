@@ -60,15 +60,6 @@
   revision = "bca926d6af69b117eb6afa0e50ec2dc32d2899d4"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/offerm/swap-resolver"
-  packages = [
-    "swapp2p",
-    "swapresolver"
-  ]
-  revision = "466628449a25b603be4e2ee16671656726447bac"
-
-[[projects]]
   name = "github.com/urfave/cli"
   packages = ["."]
   revision = "cfb38830724cc34fedffe9a2a29fb54fa9169cd1"
@@ -146,6 +137,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "16a6f3a32a04564ae2c898bfc6e0ff14275e668ffe8fdb70db872ea75464fe6f"
+  inputs-digest = "b4b25370f0c5f82b476e9082f89e0963229b65d419abd961fddd19cec3928b32"
   solver-name = "gps-cdcl"
   solver-version = 1

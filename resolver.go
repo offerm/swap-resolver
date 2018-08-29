@@ -23,9 +23,9 @@ import (
 	//"github.com/golang/protobuf/proto"
 
 	//pb "github.com/ExchangeUnion/swap-resolver/swapresolver"
-	pb "github.com/offerm/swap-resolver/swapresolver"
+	pb "github.com/ExchangeUnion/swap-resolver/swapresolver"
 	//pbp2p "github.com/ExchangeUnion/swap-resolver/swapp2p"
-	pbp2p "github.com/offerm/swap-resolver/swapp2p"
+	pbp2p "github.com/ExchangeUnion/swap-resolver/swapp2p"
 	"github.com/urfave/cli"
 	"os"
 	"github.com/davecgh/go-spew/spew"
@@ -111,7 +111,7 @@ func (s *swapResolverServer) ResolveHash(ctx context.Context, req *pb.ResolveReq
 
 	var deal *deal
 
-	log.Printf("ResolveHash stating with for hash: %v ",req.Hash)
+	log.Printf("ResolveHash stating with for hash: %v amount %v ",req.Hash, req.Amount)
 
 	for _, d := range deals{
 		if hex.EncodeToString(d.hash[:]) == req.Hash{
