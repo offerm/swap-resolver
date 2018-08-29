@@ -11,6 +11,9 @@ service SwapResolver {
 
 message ResolveRequest {
   string hash = 1 ;
+  uint32 timeout = 2;
+  uint32 heightnow = 3;
+  int64  Amount = 4;
 }
 
 message ResolveResponse {
