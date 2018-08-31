@@ -2,7 +2,7 @@
 // source: swap_p2p.proto
 
 /*
-Package swapresolver is a generated protocol buffer package.
+Package hashresolver is a generated protocol buffer package.
 
 It is generated from these files:
 	swap_p2p.proto
@@ -61,9 +61,9 @@ func (CoinType) EnumDescriptor() ([]byte, []int) { return fileDescriptor0, []int
 type TakeOrderReq struct {
 	Orderid     string   `protobuf:"bytes,1,opt,name=orderid" json:"orderid,omitempty"`
 	TakerAmount int64    `protobuf:"varint,2,opt,name=taker_amount,json=takerAmount" json:"taker_amount,omitempty"`
-	TakerCoin   CoinType `protobuf:"varint,3,opt,name=taker_coin,json=takerCoin,enum=swapresolver.CoinType" json:"taker_coin,omitempty"`
+	TakerCoin   CoinType `protobuf:"varint,3,opt,name=taker_coin,json=takerCoin,enum=hashresolver.CoinType" json:"taker_coin,omitempty"`
 	MakerAmount int64    `protobuf:"varint,4,opt,name=maker_amount,json=makerAmount" json:"maker_amount,omitempty"`
-	MakerCoin   CoinType `protobuf:"varint,5,opt,name=maker_coin,json=makerCoin,enum=swapresolver.CoinType" json:"maker_coin,omitempty"`
+	MakerCoin   CoinType `protobuf:"varint,5,opt,name=maker_coin,json=makerCoin,enum=hashresolver.CoinType" json:"maker_coin,omitempty"`
 }
 
 func (m *TakeOrderReq) Reset()                    { *m = TakeOrderReq{} }
@@ -126,9 +126,9 @@ type SuggestDealReq struct {
 	Orderid     string   `protobuf:"bytes,1,opt,name=orderid" json:"orderid,omitempty"`
 	TakerDealId string   `protobuf:"bytes,2,opt,name=taker_deal_id,json=takerDealId" json:"taker_deal_id,omitempty"`
 	TakerAmount int64    `protobuf:"varint,3,opt,name=taker_amount,json=takerAmount" json:"taker_amount,omitempty"`
-	TakerCoin   CoinType `protobuf:"varint,4,opt,name=taker_coin,json=takerCoin,enum=swapresolver.CoinType" json:"taker_coin,omitempty"`
+	TakerCoin   CoinType `protobuf:"varint,4,opt,name=taker_coin,json=takerCoin,enum=hashresolver.CoinType" json:"taker_coin,omitempty"`
 	MakerAmount int64    `protobuf:"varint,5,opt,name=maker_amount,json=makerAmount" json:"maker_amount,omitempty"`
-	MakerCoin   CoinType `protobuf:"varint,6,opt,name=maker_coin,json=makerCoin,enum=swapresolver.CoinType" json:"maker_coin,omitempty"`
+	MakerCoin   CoinType `protobuf:"varint,6,opt,name=maker_coin,json=makerCoin,enum=hashresolver.CoinType" json:"maker_coin,omitempty"`
 	TakerPubkey string   `protobuf:"bytes,7,opt,name=taker_pubkey,json=takerPubkey" json:"taker_pubkey,omitempty"`
 }
 
@@ -259,13 +259,13 @@ func (m *SwapResp) GetRPreimage() []byte {
 }
 
 func init() {
-	proto.RegisterType((*TakeOrderReq)(nil), "swapresolver.TakeOrderReq")
-	proto.RegisterType((*TakeOrderResp)(nil), "swapresolver.TakeOrderResp")
-	proto.RegisterType((*SuggestDealReq)(nil), "swapresolver.SuggestDealReq")
-	proto.RegisterType((*SuggestDealResp)(nil), "swapresolver.SuggestDealResp")
-	proto.RegisterType((*SwapReq)(nil), "swapresolver.SwapReq")
-	proto.RegisterType((*SwapResp)(nil), "swapresolver.SwapResp")
-	proto.RegisterEnum("swapresolver.CoinType", CoinType_name, CoinType_value)
+	proto.RegisterType((*TakeOrderReq)(nil), "hashresolver.TakeOrderReq")
+	proto.RegisterType((*TakeOrderResp)(nil), "hashresolver.TakeOrderResp")
+	proto.RegisterType((*SuggestDealReq)(nil), "hashresolver.SuggestDealReq")
+	proto.RegisterType((*SuggestDealResp)(nil), "hashresolver.SuggestDealResp")
+	proto.RegisterType((*SwapReq)(nil), "hashresolver.SwapReq")
+	proto.RegisterType((*SwapResp)(nil), "hashresolver.SwapResp")
+	proto.RegisterEnum("hashresolver.CoinType", CoinType_name, CoinType_value)
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -304,7 +304,7 @@ func NewP2PClient(cc *grpc.ClientConn) P2PClient {
 
 func (c *p2PClient) TakeOrder(ctx context.Context, in *TakeOrderReq, opts ...grpc.CallOption) (*TakeOrderResp, error) {
 	out := new(TakeOrderResp)
-	err := grpc.Invoke(ctx, "/swapresolver.P2P/TakeOrder", in, out, c.cc, opts...)
+	err := grpc.Invoke(ctx, "/hashresolver.P2P/TakeOrder", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -313,7 +313,7 @@ func (c *p2PClient) TakeOrder(ctx context.Context, in *TakeOrderReq, opts ...grp
 
 func (c *p2PClient) SuggestDeal(ctx context.Context, in *SuggestDealReq, opts ...grpc.CallOption) (*SuggestDealResp, error) {
 	out := new(SuggestDealResp)
-	err := grpc.Invoke(ctx, "/swapresolver.P2P/SuggestDeal", in, out, c.cc, opts...)
+	err := grpc.Invoke(ctx, "/hashresolver.P2P/SuggestDeal", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -322,7 +322,7 @@ func (c *p2PClient) SuggestDeal(ctx context.Context, in *SuggestDealReq, opts ..
 
 func (c *p2PClient) Swap(ctx context.Context, in *SwapReq, opts ...grpc.CallOption) (*SwapResp, error) {
 	out := new(SwapResp)
-	err := grpc.Invoke(ctx, "/swapresolver.P2P/Swap", in, out, c.cc, opts...)
+	err := grpc.Invoke(ctx, "/hashresolver.P2P/Swap", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -361,7 +361,7 @@ func _P2P_TakeOrder_Handler(srv interface{}, ctx context.Context, dec func(inter
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/swapresolver.P2P/TakeOrder",
+		FullMethod: "/hashresolver.P2P/TakeOrder",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(P2PServer).TakeOrder(ctx, req.(*TakeOrderReq))
@@ -379,7 +379,7 @@ func _P2P_SuggestDeal_Handler(srv interface{}, ctx context.Context, dec func(int
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/swapresolver.P2P/SuggestDeal",
+		FullMethod: "/hashresolver.P2P/SuggestDeal",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(P2PServer).SuggestDeal(ctx, req.(*SuggestDealReq))
@@ -397,7 +397,7 @@ func _P2P_Swap_Handler(srv interface{}, ctx context.Context, dec func(interface{
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/swapresolver.P2P/Swap",
+		FullMethod: "/hashresolver.P2P/Swap",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(P2PServer).Swap(ctx, req.(*SwapReq))
@@ -406,7 +406,7 @@ func _P2P_Swap_Handler(srv interface{}, ctx context.Context, dec func(interface{
 }
 
 var _P2P_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "swapresolver.P2P",
+	ServiceName: "hashresolver.P2P",
 	HandlerType: (*P2PServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
