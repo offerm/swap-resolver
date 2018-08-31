@@ -1,7 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "swap_resolver.proto",
+    "title": "hash_resolver.proto",
     "version": "version not set"
   },
   "schemes": [
@@ -16,7 +16,7 @@
   ],
   "paths": {},
   "definitions": {
-    "swapresolverResolveResponse": {
+    "hashresolverResolveResponse": {
       "type": "object",
       "properties": {
         "preimage": {

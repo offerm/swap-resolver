@@ -27,7 +27,7 @@ import (
 	"crypto/sha256"
 )
 
-type swapResolverServer struct {
+type hashResolverServer struct {
 	p2pServer *P2PServer
 	mu         sync.Mutex // protects data structure
 }
@@ -88,7 +88,7 @@ var (
 
 
 // GetFeature returns the feature at the given point.
-func (s *swapResolverServer) ResolveHash(ctx context.Context, req *pb.ResolveRequest) (*pb.ResolveResponse, error) {
+func (s *hashResolverServer) ResolveHash(ctx context.Context, req *pb.ResolveRequest) (*pb.ResolveResponse, error) {
 
 	var deal *deal
 
@@ -102,8 +102,8 @@ func (s *swapResolverServer) ResolveHash(ctx context.Context, req *pb.ResolveReq
 	}
 
 	if deal == nil{
-		log.Printf("Something went wrong. Can't find deal in swapResolverServer: %v ",req.Hash)
-		return nil, fmt.Errorf("Something went wrong. Can't find deal in swapResolverServer")
+		log.Printf("Something went wrong. Can't find deal in hashResolverServer: %v ",req.Hash)
+		return nil, fmt.Errorf("Something went wrong. Can't find deal in hashResolverServer")
 	}
 
 	// If I'm the taker I need to forward the payment to the other chanin
@@ -159,8 +159,8 @@ func (s *swapResolverServer) ResolveHash(ctx context.Context, req *pb.ResolveReq
 }
 
 
-func newServer(p2pServer *P2PServer) *swapResolverServer {
-	s := &swapResolverServer{
+func newServer(p2pServer *P2PServer) *hashResolverServer {
+	s := &hashResolverServer{
 		p2pServer: p2pServer,
 	}
 	return s
@@ -476,7 +476,7 @@ func main() {
 		var opts []grpc.ServerOption
 		grpcServer := grpc.NewServer(opts...)
 		p2pServer := newP2PServer(xuPeer, lnLTC, lnBTC)
-		pb.RegisterSwapResolverServer(grpcServer, newServer(p2pServer))
+		pb.RegisterHashResolverServer(grpcServer, newServer(p2pServer))
 		pbp2p.RegisterP2PServer(grpcServer, p2pServer)
 		log.Printf("Server ready")
 		grpcServer.Serve(lis)
