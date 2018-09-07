@@ -13,18 +13,18 @@ import (
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	pb "github.com/ExchangeUnion/swap-resolver/hashresolver"
+	pb "github.com/ExchangeUnion/lnd/lnrpc"
 	pbp2p "github.com/ExchangeUnion/swap-resolver/swapp2p"
 	"github.com/urfave/cli"
 	"os"
 	"github.com/davecgh/go-spew/spew"
 	"time"
 	"github.com/dchest/uniuri"
-	"github.com/lightningnetwork/lnd/lnrpc"
 	"github.com/btcsuite/btcutil"
 	"path/filepath"
 	"google.golang.org/grpc/credentials"
 	"crypto/sha256"
+	"github.com/ExchangeUnion/lnd/lnrpc"
 )
 
 type hashResolverServer struct {
