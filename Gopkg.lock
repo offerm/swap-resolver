@@ -2,85 +2,95 @@
 
 
 [[projects]]
+  branch = "resolver"
+  digest = "1:1800f165ba6376cdd4395a3049dc267d9680b476578d95c67952eba05848d0be"
+  name = "github.com/ExchangeUnion/lnd"
+  packages = ["lnrpc"]
+  pruneopts = "UT"
+  revision = "43acf273e60129b93a2f5030d82e4d1a2b7944b1"
+
+[[projects]]
+  digest = "1:10eead28c93f58b281c9721ef6200875dad16ca9032d227490f58082cb5d1853"
   name = "github.com/btcsuite/btcd"
   packages = [
     "btcec",
     "chaincfg",
     "chaincfg/chainhash",
-    "wire"
+    "wire",
   ]
+  pruneopts = "UT"
   revision = "86fed781132ac890ee03e906e4ecd5d6fa180c64"
 
 [[projects]]
   branch = "master"
+  digest = "1:d0a31b77988b04afbfa2c5ee38567a7a35d5a95de2266a644a7bc8d5c898e68d"
   name = "github.com/btcsuite/btcutil"
   packages = [
     ".",
     "base58",
-    "bech32"
+    "bech32",
   ]
+  pruneopts = "UT"
   revision = "ab6388e0c60ae4834a1f57511e20c17b5f78be4b"
 
 [[projects]]
+  digest = "1:a2c1d0e43bd3baaa071d1b9ed72c27d78169b2b269f71c105ac4ba34b1be4a39"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
+  pruneopts = "UT"
   revision = "346938d642f2ec3594ed81d874461961cd0faa76"
   version = "v1.1.0"
 
 [[projects]]
   branch = "master"
+  digest = "1:fdae1c338ec6667687fb3fdbde842b3c421c930163981b5d441502b240b7f50b"
   name = "github.com/dchest/uniuri"
   packages = ["."]
+  pruneopts = "UT"
   revision = "8902c56451e9b58ff940bbe5fec35d5f9c04584a"
 
 [[projects]]
+  digest = "1:19c3d5be42d5d503b94650e45bb2a01264bb36caff20f708e9cf67a6683b4c04"
   name = "github.com/golang/protobuf"
   packages = [
     "jsonpb",
     "proto",
     "protoc-gen-go/descriptor",
     "ptypes/any",
-    "ptypes/struct"
+    "ptypes/struct",
   ]
+  pruneopts = "UT"
   revision = "bbd03ef6da3a115852eaf24c8a1c46aeb39aa175"
 
 [[projects]]
+  digest = "1:983bdae4397d2a7c88316865e7de6b76bbedd8c33342004931829eba0975d9ed"
   name = "github.com/grpc-ecosystem/grpc-gateway"
   packages = [
     "runtime",
     "runtime/internal",
-    "utilities"
+    "utilities",
   ]
+  pruneopts = "UT"
   revision = "f2862b476edcef83412c7af8687c9cd8e4097c0f"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/lightningnetwork/lnd"
-  packages = ["lnrpc"]
-  revision = "bca926d6af69b117eb6afa0e50ec2dc32d2899d4"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/offerm/swap-resolver"
-  packages = [
-    "swapp2p",
-    "swapresolver"
-  ]
-  revision = "466628449a25b603be4e2ee16671656726447bac"
-
-[[projects]]
+  digest = "1:b24d38b282bacf9791408a080f606370efa3d364e4b5fd9ba0f7b87786d3b679"
   name = "github.com/urfave/cli"
   packages = ["."]
+  pruneopts = "UT"
   revision = "cfb38830724cc34fedffe9a2a29fb54fa9169cd1"
   version = "v1.20.0"
 
 [[projects]]
   branch = "master"
+  digest = "1:f804354850ef747f20e387a75e04dfc64a205ab342f7086b7d77796865ff5ede"
   name = "golang.org/x/crypto"
   packages = ["ripemd160"]
+  pruneopts = "UT"
   revision = "a2144134853fc9a27a7b1e3eb4f19f1a76df13c9"
 
 [[projects]]
+  digest = "1:279284b3cc1429d8ea79402792b17c5dbfadd583ec4963db69f0368762f89be4"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -89,11 +99,13 @@
     "idna",
     "internal/timeseries",
     "lex/httplex",
-    "trace"
+    "trace",
   ]
+  pruneopts = "UT"
   revision = "ae89d30ce0c63142b652837da33d782e2b0a9b25"
 
 [[projects]]
+  digest = "1:a2ab62866c75542dd18d2b069fec854577a20211d7c0ea6ae746072a1dccdd18"
   name = "golang.org/x/text"
   packages = [
     "collate",
@@ -109,20 +121,24 @@
     "unicode/bidi",
     "unicode/cldr",
     "unicode/norm",
-    "unicode/rangetable"
+    "unicode/rangetable",
   ]
+  pruneopts = "UT"
   revision = "f21a4dfb5e38f5895301dc265a8def02365cc3d0"
   version = "v0.3.0"
 
 [[projects]]
+  digest = "1:c2dee8dbcc504d1a7858f5dbaed7c8b256c512c5e9e81480158c30185bbd2792"
   name = "google.golang.org/genproto"
   packages = [
     "googleapis/api/annotations",
-    "googleapis/rpc/status"
+    "googleapis/rpc/status",
   ]
+  pruneopts = "UT"
   revision = "df60624c1e9b9d2973e889c7a1cff73155da81c4"
 
 [[projects]]
+  digest = "1:8d9ccf0a790b530f94357a5d27e9c86fb53e862b6e0f9133c792269c0b567218"
   name = "google.golang.org/grpc"
   packages = [
     ".",
@@ -139,13 +155,24 @@
     "stats",
     "status",
     "tap",
-    "transport"
+    "transport",
   ]
+  pruneopts = "UT"
   revision = "b3ddf786825de56a4178401b7e174ee332173b66"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "16a6f3a32a04564ae2c898bfc6e0ff14275e668ffe8fdb70db872ea75464fe6f"
+  input-imports = [
+    "github.com/ExchangeUnion/lnd/lnrpc",
+    "github.com/btcsuite/btcutil",
+    "github.com/davecgh/go-spew/spew",
+    "github.com/dchest/uniuri",
+    "github.com/golang/protobuf/proto",
+    "github.com/urfave/cli",
+    "golang.org/x/net/context",
+    "google.golang.org/grpc",
+    "google.golang.org/grpc/credentials",
+  ]
   solver-name = "gps-cdcl"
   solver-version = 1

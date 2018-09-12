@@ -44,3 +44,7 @@
 [prune]
   go-tests = true
   unused-packages = true
+
+[[constraint]]
+  branch = "resolver"
+  name = "github.com/ExchangeUnion/lnd"

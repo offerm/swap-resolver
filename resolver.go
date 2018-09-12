@@ -5,48 +5,29 @@ package main
 
 import (
 	"fmt"
-	//"io"
-	//"io/ioutil"
 	"log"
-	//"math"
 	"net"
 	"sync"
-	//"time"
 	"encoding/hex"
 	"crypto/rand"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	//"google.golang.org/grpc/credentials"
-	//"google.golang.org/grpc/testdata"
-
-	//"github.com/golang/protobuf/proto"
-
-	//pb "github.com/ExchangeUnion/swap-resolver/swapresolver"
-	pb "github.com/offerm/swap-resolver/swapresolver"
-	//pbp2p "github.com/ExchangeUnion/swap-resolver/swapp2p"
-	pbp2p "github.com/offerm/swap-resolver/swapp2p"
+	pb "github.com/ExchangeUnion/lnd/lnrpc"
+	pbp2p "github.com/ExchangeUnion/swap-resolver/swapp2p"
 	"github.com/urfave/cli"
 	"os"
 	"github.com/davecgh/go-spew/spew"
 	"time"
 	"github.com/dchest/uniuri"
-	//"github.com/lightningnetwork/lnd/macaroons"
-	//"github.com/lightningnetwork/lnd/lncfg"
-	"github.com/lightningnetwork/lnd/lnrpc"
 	"github.com/btcsuite/btcutil"
 	"path/filepath"
 	"google.golang.org/grpc/credentials"
-	//"io/ioutil"
-	//"gopkg.in/macaroon.v2"
-	//"strings"
-	//"os/user"
-	//"github.com/lightningnetwork/lnd/macaroons"
-	//"github.com/lightningnetwork/lnd/lncfg"
 	"crypto/sha256"
+	"github.com/ExchangeUnion/lnd/lnrpc"
 )
 
-type swapResolverServer struct {
+type hashResolverServer struct {
 	p2pServer *P2PServer
 	mu         sync.Mutex // protects data structure
 }
@@ -107,11 +88,11 @@ var (
 
 
 // GetFeature returns the feature at the given point.
-func (s *swapResolverServer) ResolveHash(ctx context.Context, req *pb.ResolveRequest) (*pb.ResolveResponse, error) {
+func (s *hashResolverServer) ResolveHash(ctx context.Context, req *pb.ResolveRequest) (*pb.ResolveResponse, error) {
 
 	var deal *deal
 
-	log.Printf("ResolveHash stating with for hash: %v ",req.Hash)
+	log.Printf("ResolveHash stating with for hash: %v amount %v ",req.Hash, req.Amount)
 
 	for _, d := range deals{
 		if hex.EncodeToString(d.hash[:]) == req.Hash{
@@ -121,8 +102,8 @@ func (s *swapResolverServer) ResolveHash(ctx context.Context, req *pb.ResolveReq
 	}
 
 	if deal == nil{
-		log.Printf("Something went wrong. Can't find deal in swapResolverServer: %v ",req.Hash)
-		return nil, fmt.Errorf("Something went wrong. Can't find deal in swapResolverServer")
+		log.Printf("Something went wrong. Can't find deal in hashResolverServer: %v ",req.Hash)
+		return nil, fmt.Errorf("Something went wrong. Can't find deal in hashResolverServer")
 	}
 
 	// If I'm the taker I need to forward the payment to the other chanin
@@ -178,8 +159,8 @@ func (s *swapResolverServer) ResolveHash(ctx context.Context, req *pb.ResolveReq
 }
 
 
-func newServer(p2pServer *P2PServer) *swapResolverServer {
-	s := &swapResolverServer{
+func newServer(p2pServer *P2PServer) *hashResolverServer {
+	s := &hashResolverServer{
 		p2pServer: p2pServer,
 	}
 	return s
@@ -495,7 +476,7 @@ func main() {
 		var opts []grpc.ServerOption
 		grpcServer := grpc.NewServer(opts...)
 		p2pServer := newP2PServer(xuPeer, lnLTC, lnBTC)
-		pb.RegisterSwapResolverServer(grpcServer, newServer(p2pServer))
+		pb.RegisterHashResolverServer(grpcServer, newServer(p2pServer))
 		pbp2p.RegisterP2PServer(grpcServer, p2pServer)
 		log.Printf("Server ready")
 		grpcServer.Serve(lis)
